@@ -1,0 +1,11 @@
+:root {
+    --cellSize: 50px;
+}
+
+.cell {
+    height: var(--cellSize);
+    width: var(--cellSize);
+    padding: 0;
+    margin: 0;
+    border: 1;
+}
