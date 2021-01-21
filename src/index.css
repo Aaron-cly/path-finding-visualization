@@ -28,3 +28,12 @@
     display: flex;
     width: calc((var(--cellSize)) * 80);
 }
+
+button {
+    height: 50px;
+    width: 50px;
+}
+
+.button-wrapper {
+    height: auto;
+}
