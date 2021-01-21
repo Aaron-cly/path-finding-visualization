@@ -32,13 +32,25 @@ function Cell(props) {
 }
 
 function Start_point(props) {
-    return <button id="startpoint-button">Starting Point</button>;
+    return (
+        <button id="startpoint-button" onClick={props.onClick}>
+            Starting Point
+        </button>
+    );
 }
 function End_point(props) {
-    return <button id="endpoint-button">End Point</button>;
+    return (
+        <button id="endpoint-button" onClick={props.onClick}>
+            End Point
+        </button>
+    );
 }
 function Find_path(props) {
-    return <button id="findpath-button">Find Path</button>;
+    return (
+        <button id="findpath-button" onClick={props.onClick}>
+            Find Path
+        </button>
+    );
 }
 
 class Grid extends React.Component {
@@ -46,6 +58,8 @@ class Grid extends React.Component {
         super(props);
         this.state = {
             pressed: false,
+            start: null,
+            end: null,
             //cells stores the state of each cell (0:free space; 1:start; 2:end; 3:obstacle)
             cells: Array(max_row * max_col).fill(0),
             object: 3,
@@ -68,29 +82,62 @@ class Grid extends React.Component {
     renderButtons() {
         return (
             <div>
-                <Start_point />
-                <End_point />
+                <Start_point onClick={() => this.handleStartButton()} />
+                <End_point onClick={() => this.handleEndButton()} />
                 <Find_path />
             </div>
         );
     }
 
     handleStartButton() {
-        if (this.state.object === 3) {
+        if (this.state.object != 1) {
+            this.setState({
+                object: 1,
+            });
+        } else {
             this.setState({
                 object: 3,
             });
+        }
+    }
+
+    handleEndButton() {
+        if (this.state.object != 2) {
+            this.setState({
+                object: 2,
+            });
         } else {
+            this.setState({
+                object: 3,
+            });
         }
     }
 
     handlePress(i) {
         const cells = Array.from(this.state.cells);
-        cells[i] = 3;
-        this.setState({
-            pressed: !this.state.pressed,
-            cells: cells,
-        });
+        cells[i] = this.state.object;
+        if (this.state.object === 3) {
+            this.setState({
+                pressed: !this.state.pressed,
+                cells: cells,
+            });
+        } else {
+            if (this.state.object === 1) {
+                cells[this.state.start] = 0;
+                this.setState({
+                    start: i,
+                });
+            }
+            if (this.state.object === 2) {
+                cells[this.state.end] = 0;
+                this.setState({
+                    end: i,
+                });
+            }
+            this.setState({
+                cells: cells,
+            });
+        }
     }
 
     handleRelease() {
@@ -100,7 +147,7 @@ class Grid extends React.Component {
     }
 
     handleSelect(i) {
-        if (this.state.pressed) {
+        if (this.state.pressed && this.state.object === 3) {
             const cells = Array.from(this.state.cells);
             cells[i] = 3;
             this.setState({
@@ -132,6 +179,7 @@ class Grid extends React.Component {
             <div>
                 <div className="grid">{rows}</div>
                 <div className="button-wrapper">{this.renderButtons()}</div>
+                <div>{this.state.object}</div>
             </div>
         );
     }
