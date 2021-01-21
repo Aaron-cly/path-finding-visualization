@@ -13,6 +13,10 @@
     border-right: 1px solid black;
 }
 
+.obstacle {
+    background-color: black;
+}
+
 .grid {
     height: auto;
     width: auto;
