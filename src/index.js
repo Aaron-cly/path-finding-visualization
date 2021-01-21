@@ -9,6 +9,7 @@ function Cell(props) {
     return (
         <div
             className="cell"
+            id={props.coord}
             onMouseDown={props.onMouseDown}
             onMouseUp={props.onMouseUp}
             onMouseOver={props.onMouseOver}
@@ -23,7 +24,6 @@ class Grid extends React.Component {
         super(props);
         this.state = {
             pressed: false,
-            value: 0,
             cells: Array(max_row * max_col).fill(0), //stores the state of each cell (0:free space; 1:start; 2:end; -1:obstacle)
         };
     }
@@ -32,33 +32,36 @@ class Grid extends React.Component {
         return (
             <Cell
                 key={i}
-                value={this.state.value}
-                onMouseDown={() => this.handlePress()}
+                coord={i}
+                value={this.state.cells[i]}
+                onMouseDown={() => this.handlePress(i)}
                 onMouseUp={() => this.handleRelease()}
                 onMouseOver={() => this.handleSelect(i)}
             />
         );
     }
 
-    handlePress() {
+    handlePress(i) {
+        const cells = Array.from(this.state.cells);
+        cells[i] = -1;
         this.setState({
             pressed: !this.state.pressed,
-        });
-        this.setState({
-            value: this.state.value + 1,
+            cells: cells,
         });
     }
 
     handleRelease() {
         this.setState({
-            pressed: !this.state.value,
+            pressed: !this.state.pressed,
         });
     }
 
     handleSelect(i) {
         if (this.state.pressed) {
+            const cells = Array.from(this.state.cells);
+            cells[i] = -1;
             this.setState({
-                value: this.state.value + 1,
+                cells: cells,
             });
         }
     }
@@ -75,23 +78,32 @@ class Grid extends React.Component {
             col_index.push(i);
         }
 
-        for (const [index, value] of col_index.entries()) {
-            cols.push(this.renderCell({ value }));
-        }
-
         for (let i = 0; i < max_row; ++i) {
             row_index.push(i);
         }
 
-        for (const [index, value] of row_index.entries()) {
+        //for each row insert cols
+        for (const [index_row, value_row] of row_index.entries()) {
+            const cols = [];
+            let coord;
+            for (const [index_col, value_col] of col_index.entries()) {
+                coord = value_row * max_col + value_col;
+                cols.push(this.renderCell(coord));
+            }
+
             rows.push(
-                <div key={index} className="grid-row">
+                <div key={index_row} className="grid-row">
                     {cols}
                 </div>
             );
         }
 
-        return <div className="grid">{rows}</div>;
+        return (
+            <div>
+                <div className="grid">{rows}</div>
+                <div>{this.state.cells[0]}</div>
+            </div>
+        );
     }
 }
 
