@@ -2,8 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
-const max_row = 20,
-    max_col = 10;
+const max_row = 30,
+    max_col = 80;
 
 function Cell(props) {
     return (
@@ -24,7 +24,7 @@ class Grid extends React.Component {
         this.state = {
             pressed: false,
             value: 0,
-            //cells: Array(max_row * max_col).fill(null),
+            cells: Array(max_row * max_col).fill(0), //stores the state of each cell (0:free space; 1:start; 2:end; -1:obstacle)
         };
     }
 
@@ -32,11 +32,10 @@ class Grid extends React.Component {
         return (
             <Cell
                 key={i}
-                coord={i}
+                value={this.state.value}
                 onMouseDown={() => this.handlePress()}
                 onMouseUp={() => this.handleRelease()}
                 onMouseOver={() => this.handleSelect(i)}
-                value={this.state.value}
             />
         );
     }
@@ -65,8 +64,10 @@ class Grid extends React.Component {
     }
 
     render() {
+        const cells_index = [];
         const col_index = [];
         const row_index = [];
+        const cells = [];
         const cols = [];
         const rows = [];
 
@@ -83,7 +84,11 @@ class Grid extends React.Component {
         }
 
         for (const [index, value] of row_index.entries()) {
-            rows.push(<div key={index}> {cols} </div>);
+            rows.push(
+                <div key={index} className="grid-row">
+                    {cols}
+                </div>
+            );
         }
 
         return <div className="grid">{rows}</div>;

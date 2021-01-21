@@ -1,5 +1,5 @@
 :root {
-    --cellSize: 30px;
+    --cellSize: 20px;
 }
 
 .cell {
@@ -16,4 +16,11 @@
 .grid {
     height: auto;
     width: auto;
+    overflow: hidden;
+}
+
+.grid-row {
+    float: left;
+    display: flex;
+    width: calc((var(--cellSize)) * 80);
 }
