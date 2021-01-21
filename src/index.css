@@ -13,6 +13,14 @@
     border-right: 1px solid black;
 }
 
+.start {
+    background-color: red;
+}
+
+.end {
+    background-color: blue;
+}
+
 .obstacle {
     background-color: black;
 }
