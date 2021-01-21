@@ -7,6 +7,18 @@ const max_row = 30,
 
 const cell_class = ["cell", "cell start", "cell end", "cell obstacle"];
 
+const cells_index = [],
+    col_index = [],
+    row_index = [];
+
+for (let i = 0; i < max_col; ++i) {
+    col_index.push(i);
+}
+
+for (let i = 0; i < max_row; ++i) {
+    row_index.push(i);
+}
+
 function Cell(props) {
     return (
         <div
@@ -19,6 +31,16 @@ function Cell(props) {
     );
 }
 
+function Start_point(props) {
+    return <button id="startpoint-button">Starting Point</button>;
+}
+function End_point(props) {
+    return <button id="endpoint-button">End Point</button>;
+}
+function Find_path(props) {
+    return <button id="findpath-button">Find Path</button>;
+}
+
 class Grid extends React.Component {
     constructor(props) {
         super(props);
@@ -26,6 +48,7 @@ class Grid extends React.Component {
             pressed: false,
             //cells stores the state of each cell (0:free space; 1:start; 2:end; 3:obstacle)
             cells: Array(max_row * max_col).fill(0),
+            object: 3,
         };
     }
 
@@ -40,6 +63,25 @@ class Grid extends React.Component {
                 onMouseOver={() => this.handleSelect(i)}
             />
         );
+    }
+
+    renderButtons() {
+        return (
+            <div>
+                <Start_point />
+                <End_point />
+                <Find_path />
+            </div>
+        );
+    }
+
+    handleStartButton() {
+        if (this.state.object === 3) {
+            this.setState({
+                object: 3,
+            });
+        } else {
+        }
     }
 
     handlePress(i) {
@@ -68,20 +110,7 @@ class Grid extends React.Component {
     }
 
     render() {
-        const cells_index = [];
-        const col_index = [];
-        const row_index = [];
-        const cells = [];
-        const cols = [];
         const rows = [];
-
-        for (let i = 0; i < max_col; ++i) {
-            col_index.push(i);
-        }
-
-        for (let i = 0; i < max_row; ++i) {
-            row_index.push(i);
-        }
 
         //for each row insert cols
         for (const [index_row, value_row] of row_index.entries()) {
@@ -102,7 +131,7 @@ class Grid extends React.Component {
         return (
             <div>
                 <div className="grid">{rows}</div>
-                <div>{this.state.cells[0]}</div>
+                <div className="button-wrapper">{this.renderButtons()}</div>
             </div>
         );
     }
