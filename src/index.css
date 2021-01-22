@@ -39,7 +39,8 @@
 
 button {
     height: 50px;
-    width: 50px;
+    width: 100px;
+    margin: 20px;
 }
 
 .button-wrapper {

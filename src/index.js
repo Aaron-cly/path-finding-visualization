@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import "./index.css";
 
 const max_row = 30,
-    max_col = 80;
+    max_col = 40;
 
 const cell_class = ["cell", "cell start", "cell end", "cell obstacle"];
 
@@ -23,11 +23,10 @@ function Cell(props) {
     return (
         <div
             className={cell_class[props.value]}
-            id={props.coord}
             onMouseDown={props.onMouseDown}
             onMouseUp={props.onMouseUp}
             onMouseOver={props.onMouseOver}
-        />
+        ></div>
     );
 }
 
@@ -53,28 +52,35 @@ function Find_path(props) {
     );
 }
 
+const array_cols = Array(max_col).fill(0);
 class Grid extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             pressed: false,
-            start: null,
-            end: null,
+            start: { c1: 0, c2: 0 },
+            end: { c1: max_row - 1, c2: max_col - 1 },
             //cells stores the state of each cell (0:free space; 1:start; 2:end; 3:obstacle)
-            cells: Array(max_row * max_col).fill(0),
+            //cells: Array(max_row * max_col).fill(0),
+            cells: Array(max_row)
+                .fill(null)
+                .map(() => Array.from(array_cols)),
             object: 3,
         };
     }
 
-    renderCell(i) {
+    renderCell(i, j) {
+        let key = i * max_col + j;
         return (
             <Cell
-                key={i}
-                coord={i}
-                value={this.state.cells[i]}
-                onMouseDown={() => this.handlePress(i)}
+                key={key}
+                //value_row * max_col + value_col;
+                c1={i}
+                c2={j}
+                value={this.state.cells[i][j]}
+                onMouseDown={() => this.handlePress(i, j)}
                 onMouseUp={() => this.handleRelease()}
-                onMouseOver={() => this.handleSelect(i)}
+                onMouseOver={() => this.handleSelect(i, j)}
             />
         );
     }
@@ -113,9 +119,12 @@ class Grid extends React.Component {
         }
     }
 
-    handlePress(i) {
+    handlePress(i, j) {
         const cells = Array.from(this.state.cells);
-        cells[i] = this.state.object;
+        const start = this.state.start;
+        const end = this.state.end;
+        cells[i][j] = this.state.object;
+
         if (this.state.object === 3) {
             this.setState({
                 pressed: !this.state.pressed,
@@ -123,20 +132,18 @@ class Grid extends React.Component {
             });
         } else {
             if (this.state.object === 1) {
-                cells[this.state.start] = 0;
+                cells[start.c1][start.c2] = 0;
                 this.setState({
-                    start: i,
+                    start: { c1: i, c2: j },
+                    cells: cells,
+                });
+            } else if (this.state.object === 2) {
+                cells[end.c1][end.c2] = 0;
+                this.setState({
+                    end: { c1: i, c2: j },
+                    cells: cells,
                 });
             }
-            if (this.state.object === 2) {
-                cells[this.state.end] = 0;
-                this.setState({
-                    end: i,
-                });
-            }
-            this.setState({
-                cells: cells,
-            });
         }
     }
 
@@ -146,29 +153,22 @@ class Grid extends React.Component {
         });
     }
 
-    handleSelect(i) {
+    handleSelect(i, j) {
         if (this.state.pressed && this.state.object === 3) {
             const cells = Array.from(this.state.cells);
-            cells[i] = 3;
+            cells[i][j] = 3;
             this.setState({
                 cells: cells,
             });
         }
     }
 
-    findpath(cells, j) {
-        cells[0] = j;
-    }
-
     handlefindpath(coord) {
         const cells = this.state.cells;
-        cells[coord] = 3;
+        findpath(cells, this.state.start, this.state.end);
         this.setState({
             cells: cells,
         });
-        //add delay
-        if (coord > 10) return;
-        setTimeout(() => this.handlefindpath(coord + 1), 250);
     }
 
     render() {
@@ -177,10 +177,9 @@ class Grid extends React.Component {
         //for each row insert cols
         for (const [index_row, value_row] of row_index.entries()) {
             const cols = [];
-            let coord;
+            const coord = [];
             for (const [index_col, value_col] of col_index.entries()) {
-                coord = value_row * max_col + value_col;
-                cols.push(this.renderCell(coord));
+                cols.push(this.renderCell(index_row, index_col));
             }
 
             rows.push(
@@ -201,10 +200,14 @@ class Grid extends React.Component {
 }
 
 ReactDOM.render(<Grid />, document.getElementById("root"));
-/*
-function timeout(delay: number) {
-    return new Promise((res) => setTimeout(res, delay));
+
+function findpath(cells, start, end) {
+    const open = Array.from(cells);
+    cells[start + 1] = 3;
 }
-*/
+
+const distance = (coord_a, coord_b) => {};
 
 //save every move in an array [cells, cells, cells,...]
+//delay function
+//setTimeout(() => function, 250);
