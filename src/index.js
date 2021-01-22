@@ -7,8 +7,7 @@ const max_row = 30,
 
 const cell_class = ["cell", "cell start", "cell end", "cell obstacle"];
 
-const cells_index = [],
-    col_index = [],
+const col_index = [],
     row_index = [];
 
 for (let i = 0; i < max_col; ++i) {
@@ -90,13 +89,13 @@ class Grid extends React.Component {
             <div>
                 <Start_point onClick={() => this.handleStartButton()} />
                 <End_point onClick={() => this.handleEndButton()} />
-                <Find_path onClick={() => this.handlefindpath(0)} />
+                <Find_path onClick={() => this.handlefindpath()} />
             </div>
         );
     }
 
     handleStartButton() {
-        if (this.state.object != 1) {
+        if (this.state.object !== 1) {
             this.setState({
                 object: 1,
             });
@@ -108,7 +107,7 @@ class Grid extends React.Component {
     }
 
     handleEndButton() {
-        if (this.state.object != 2) {
+        if (this.state.object !== 2) {
             this.setState({
                 object: 2,
             });
@@ -148,9 +147,11 @@ class Grid extends React.Component {
     }
 
     handleRelease() {
-        this.setState({
-            pressed: !this.state.pressed,
-        });
+        if (this.state.object !== 1 && this.state.object !== 2) {
+            this.setState({
+                pressed: !this.state.pressed,
+            });
+        }
     }
 
     handleSelect(i, j) {
@@ -163,7 +164,7 @@ class Grid extends React.Component {
         }
     }
 
-    handlefindpath(coord) {
+    handlefindpath() {
         const cells = this.state.cells;
         findpath(cells, this.state.start, this.state.end);
         this.setState({
@@ -175,10 +176,9 @@ class Grid extends React.Component {
         const rows = [];
 
         //for each row insert cols
-        for (const [index_row, value_row] of row_index.entries()) {
+        for (const [index_row] of row_index.entries()) {
             const cols = [];
-            const coord = [];
-            for (const [index_col, value_col] of col_index.entries()) {
+            for (const [index_col] of col_index.entries()) {
                 cols.push(this.renderCell(index_row, index_col));
             }
 
@@ -202,11 +202,40 @@ class Grid extends React.Component {
 ReactDOM.render(<Grid />, document.getElementById("root"));
 
 function findpath(cells, start, end) {
-    const open = Array.from(cells);
-    cells[start + 1] = 3;
+    const open = Array(max_row)
+        .fill(null)
+        .map(() => Array.from(array_cols));
+    const closed = Array.from(open);
+    const farr = [];
+
+    open[start.c1][start.c2] = 1;
+    repeat;
+    const current = { c1: start.c1, c2: start.c2 };
+
+    operations.forEach(([x, y]) => {
+        if (
+            !closed[current.c1 + x][current.c1 + y] &&
+            cells[current.c1 + x][current.c2 + y] !== 3
+        ) {
+        }
+    });
 }
 
-const distance = (coord_a, coord_b) => {};
+const distance = (a, b) => {
+    Math.sqrt(Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2));
+};
+
+const operations = [
+    [1, 0],
+    [0, 1],
+    [0, -1],
+    [-1, 0],
+];
+
+const insert_element = (arr, element) => {
+    arr.push(element);
+    arr.sort();
+};
 
 //save every move in an array [cells, cells, cells,...]
 //delay function
