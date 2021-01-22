@@ -84,7 +84,7 @@ class Grid extends React.Component {
             <div>
                 <Start_point onClick={() => this.handleStartButton()} />
                 <End_point onClick={() => this.handleEndButton()} />
-                <Find_path />
+                <Find_path onClick={() => this.handlefindpath(0)} />
             </div>
         );
     }
@@ -156,6 +156,21 @@ class Grid extends React.Component {
         }
     }
 
+    findpath(cells, j) {
+        cells[0] = j;
+    }
+
+    handlefindpath(coord) {
+        const cells = this.state.cells;
+        cells[coord] = 3;
+        this.setState({
+            cells: cells,
+        });
+        //add delay
+        if (coord > 10) return;
+        setTimeout(() => this.handlefindpath(coord + 1), 250);
+    }
+
     render() {
         const rows = [];
 
@@ -186,3 +201,10 @@ class Grid extends React.Component {
 }
 
 ReactDOM.render(<Grid />, document.getElementById("root"));
+/*
+function timeout(delay: number) {
+    return new Promise((res) => setTimeout(res, delay));
+}
+*/
+
+//save every move in an array [cells, cells, cells,...]
