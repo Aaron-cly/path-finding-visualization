@@ -235,21 +235,24 @@ class Grid extends React.Component {
         //     () => findpath(cells, start, this.state.end, open, closed),
         //     250
         // );
-        findpath(cells, start, end, open, closed);
-        this.setState({
-            cells: cells,
-        });
+        // findpath(cells, start, end, open, closed);
+        // this.setState({
+        //     cells: cells,
+        // });
+        this.handleNextstep(cells, start, end);
         // }
     }
 
-    handleNextstep() {
-        const cells = this.state.cells;
-        const start = this.state.start;
-        const end = this.state.end;
+    handleNextstep(cells, start, end) {
+        // const cells = this.state.cells;
+        // const start = this.state.start;
+        // const end = this.state.end;
         findpath(cells, start, end, open, closed);
         this.setState({
             cells: cells,
         });
+        if (closed[end.c1][end.c2]) return;
+        setTimeout(() => this.handleNextstep(cells, start, end), 50);
     }
 
     render() {
