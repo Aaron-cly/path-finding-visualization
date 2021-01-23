@@ -4,8 +4,15 @@ import "./index.css";
 
 const max_row = 30,
     max_col = 40;
-
-const cell_class = ["cell", "cell start", "cell end", "cell obstacle"];
+//                   0:free    1:start      2:end       3:obstacle      4:open list   5:closed list
+const cell_class = [
+    "cell", //0: free space
+    "cell start", //1: start node
+    "cell end", //2: end node
+    "cell obstacle", //3: obstacle
+    "cell open", //4: open list
+    "cell closed", //5: closed list
+];
 
 const col_index = [],
     row_index = [];
@@ -17,6 +24,36 @@ for (let i = 0; i < max_col; ++i) {
 for (let i = 0; i < max_row; ++i) {
     row_index.push(i);
 }
+
+class Node {
+    constructor({ c1, c2 }, gCost, hCost, { p1, p2 } = {}) {
+        this.c1 = c1;
+        this.c2 = c2;
+        this.gCost = gCost; //distance from start
+        this.hCost = hCost; //distance from end
+        this.parent = { c1: p1, c2: p2 };
+    }
+
+    get fCost() {
+        //node.fCost to call
+        return this.hCost + this.gCost;
+    }
+
+    set new_object(object) {
+        this.object = object;
+    }
+
+    set new_gCost(gCost) {
+        this.gCost = gCost;
+    }
+
+    set new_parent({ c1, c2 }) {
+        this.parent.c1 = c1;
+        this.parent.c2 = c2;
+    }
+}
+
+const node_cols = Array(max_col).fill(new Node(0));
 
 function Cell(props) {
     return (
@@ -165,8 +202,30 @@ class Grid extends React.Component {
     }
 
     handlefindpath() {
+        const open = []; //open list that stores open nodes
+        const closed = Array(max_row)
+            .fill(null)
+            .map(() => Array.from(array_cols)); //0: not on closed list; 1: on closed list
         const cells = this.state.cells;
-        findpath(cells, this.state.start, this.state.end);
+        const start = this.state.start;
+        const end = this.state.end;
+
+        const start_node = new Node(
+            { c1: start.c1, c2: start.c2 },
+            0,
+            distance(start, end),
+            { p1: start.c1, p2: start.c2 }
+        );
+        open.push(start_node);
+
+        //  while (!closed[this.state.end.c1][this.state.end.c2]) {
+        findpath(cells, start, this.state.end, open, closed);
+        // setTimeout(() => {
+        //     this.setState({
+        //         cells: cells,
+        //     });
+        // }, 250);
+        //}
         this.setState({
             cells: cells,
         });
@@ -201,29 +260,61 @@ class Grid extends React.Component {
 
 ReactDOM.render(<Grid />, document.getElementById("root"));
 
-function findpath(cells, start, end) {
-    const open = Array(max_row)
-        .fill(null)
-        .map(() => Array.from(array_cols));
-    const closed = Array.from(open);
-    const farr = [];
-
-    open[start.c1][start.c2] = 1;
-    repeat;
-    const current = { c1: start.c1, c2: start.c2 };
+function findpath(cells, start, end, open, closed) {
+    //look for the lowest f on open list
+    let index = 0;
+    for (let i = 1; i < open.length; ++i) {
+        if (open[i].fCost <= open[index].fCost) {
+            index = i;
+        }
+    }
+    const current = open[index];
+    open.splice(index, 1); //remove the node with smallest fcost from open list
+    closed[current.c1][current.c2] = 1; //add the node to closed list
 
     operations.forEach(([x, y]) => {
         if (
-            !closed[current.c1 + x][current.c1 + y] &&
+            closed[current.c1 + x][current.c1 + y] !== 5 &&
             cells[current.c1 + x][current.c2 + y] !== 3
         ) {
+            //if not on open list, add to open list
+            //and make the current cell the parent of this cell
+            //record the f,g,h costs of this cell
+            const c1 = current.c1,
+                c2 = current.c2;
+            let i = 0;
+            for (; i < open.length; ++i) {
+                if (open[i].c1 === c1 && open[i].c2 === c2) break;
+            }
+            if (i > open.length) {
+                //if this neigbor cell is not on open list
+                const node = new Node(
+                    { c1: c1, c2: c2 },
+                    1 + current.gCost,
+                    distance(end, { c1: c1, c2: c2 }),
+                    { p1: current.c1, c2: current.c2 }
+                );
+                open.push(node);
+            } else {
+                //if this neighbor cell is on open already
+                //compare gcost
+                // const existing = open[i];
+                if (current.gCost + 1 < open[i].gCost) {
+                    open[i].new_gCost = current.gCost + 1;
+                    open[i].parent = { p1: current.c1, p2: current.c2 };
+                }
+            }
         }
     });
 }
 
-const distance = (a, b) => {
-    Math.sqrt(Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2));
-};
+function distance(a, b) {
+    return Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2);
+}
+
+function match_node(node) {
+    return node.c1 === 3 && node.c2 === 2;
+}
 
 const operations = [
     [1, 0],

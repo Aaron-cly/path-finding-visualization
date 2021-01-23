@@ -24,6 +24,12 @@
 .obstacle {
     background-color: black;
 }
+.open {
+    background-color: lime;
+}
+.closed {
+    background-color: pink;
+}
 
 .grid {
     height: auto;
