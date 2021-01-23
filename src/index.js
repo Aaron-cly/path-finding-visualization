@@ -4,7 +4,7 @@ import "./index.css";
 
 const max_row = 30,
     max_col = 40;
-//                   0:free    1:start      2:end       3:obstacle      4:open list   5:closed list
+// 0:free    1:start      2:end       3:obstacle      4:open list   5:closed list
 const cell_class = [
     "cell", //0: free space
     "cell start", //1: start node
@@ -52,6 +52,12 @@ class Node {
         this.parent.c2 = c2;
     }
 }
+const array_cols = Array(max_col).fill(0);
+
+const open = []; //open list that stores open nodes
+const closed = Array(max_row)
+    .fill(null)
+    .map(() => Array.from(array_cols)); //0: not on closed list; 1: on closed list;
 
 const node_cols = Array(max_col).fill(new Node(0));
 
@@ -87,8 +93,14 @@ function Find_path(props) {
         </button>
     );
 }
+function Next_step(props) {
+    return (
+        <button id="nextstep-button" onClick={props.onClick}>
+            Next step
+        </button>
+    );
+}
 
-const array_cols = Array(max_col).fill(0);
 class Grid extends React.Component {
     constructor(props) {
         super(props);
@@ -127,6 +139,7 @@ class Grid extends React.Component {
                 <Start_point onClick={() => this.handleStartButton()} />
                 <End_point onClick={() => this.handleEndButton()} />
                 <Find_path onClick={() => this.handlefindpath()} />
+                <Next_step onClick={() => this.handleNextstep()} />
             </div>
         );
     }
@@ -202,10 +215,9 @@ class Grid extends React.Component {
     }
 
     handlefindpath() {
-        const open = []; //open list that stores open nodes
-        const closed = Array(max_row)
-            .fill(null)
-            .map(() => Array.from(array_cols)); //0: not on closed list; 1: on closed list
+        // const open = []; //open list that stores open nodes
+        //const closed = Array(max_row)
+
         const cells = this.state.cells;
         const start = this.state.start;
         const end = this.state.end;
@@ -218,14 +230,23 @@ class Grid extends React.Component {
         );
         open.push(start_node);
 
-        //  while (!closed[this.state.end.c1][this.state.end.c2]) {
-        findpath(cells, start, this.state.end, open, closed);
-        // setTimeout(() => {
-        //     this.setState({
-        //         cells: cells,
-        //     });
-        // }, 250);
-        //}
+        // while (!closed[this.state.end.c1][this.state.end.c2]) {
+        // setTimeout(
+        //     () => findpath(cells, start, this.state.end, open, closed),
+        //     250
+        // );
+        findpath(cells, start, end, open, closed);
+        this.setState({
+            cells: cells,
+        });
+        // }
+    }
+
+    handleNextstep() {
+        const cells = this.state.cells;
+        const start = this.state.start;
+        const end = this.state.end;
+        findpath(cells, start, end, open, closed);
         this.setState({
             cells: cells,
         });
@@ -270,18 +291,19 @@ function findpath(cells, start, end, open, closed) {
     }
     const current = open[index];
     open.splice(index, 1); //remove the node with smallest fcost from open list
+    cells[current.c1][current.c2] = 5;
     closed[current.c1][current.c2] = 1; //add the node to closed list
 
     operations.forEach(([x, y]) => {
-        if (
-            cells[current.c1 + x][current.c1 + y] !== 5 &&
-            cells[current.c1 + x][current.c2 + y] !== 3
-        ) {
+        const c1 = current.c1 + x,
+            c2 = current.c2 + y;
+        if (c1 >= max_row || c1 < 0 || c2 >= max_col || c2 < 0) return;
+
+        if (closed[c1][c2] !== 1 && cells[c1][c2] !== 3) {
             //if not on open list, add to open list
             //and make the current cell the parent of this cell
             //record the f,g,h costs of this cell
-            const c1 = current.c1,
-                c2 = current.c2;
+
             let i = 0;
             for (; i < open.length; ++i) {
                 if (open[i].c1 === c1 && open[i].c2 === c2) break;
@@ -295,6 +317,7 @@ function findpath(cells, start, end, open, closed) {
                     { p1: current.c1, c2: current.c2 }
                 );
                 open.push(node);
+                cells[c1][c2] = 4;
             } else {
                 //if this neighbor cell is on open already
                 //compare gcost
