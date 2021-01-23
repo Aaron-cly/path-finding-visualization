@@ -274,7 +274,7 @@ function findpath(cells, start, end, open, closed) {
 
     operations.forEach(([x, y]) => {
         if (
-            closed[current.c1 + x][current.c1 + y] !== 5 &&
+            cells[current.c1 + x][current.c1 + y] !== 5 &&
             cells[current.c1 + x][current.c2 + y] !== 3
         ) {
             //if not on open list, add to open list
@@ -286,7 +286,7 @@ function findpath(cells, start, end, open, closed) {
             for (; i < open.length; ++i) {
                 if (open[i].c1 === c1 && open[i].c2 === c2) break;
             }
-            if (i > open.length) {
+            if (i === open.length) {
                 //if this neigbor cell is not on open list
                 const node = new Node(
                     { c1: c1, c2: c2 },
@@ -306,14 +306,11 @@ function findpath(cells, start, end, open, closed) {
             }
         }
     });
+    // updateCells(cells, open, closed);
 }
 
 function distance(a, b) {
     return Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2);
-}
-
-function match_node(node) {
-    return node.c1 === 3 && node.c2 === 2;
 }
 
 const operations = [
