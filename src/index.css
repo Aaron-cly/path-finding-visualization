@@ -1,20 +1,21 @@
 :root {
     --cellSize: 20px;
+    background-color: #ddcb9b;
 }
 
 .cell {
     height: var(--cellSize);
     width: var(--cellSize);
     float: left;
-    background-color: #ddcb9b;
+    background-color: white;
     padding: 0;
     margin: 0;
-    border-bottom: 1px solid black;
-    border-right: 1px solid black;
+    border-bottom: 1px solid transparent;
+    border-right: 1px solid transparent;
 }
 
 .start {
-    background-color: red;
+    background-color: #ecfa28;
 }
 
 .end {
@@ -29,6 +30,9 @@
 }
 .closed {
     background-color: red;
+}
+.path {
+    background-color: #9d11ee;
 }
 
 .grid {
@@ -47,6 +51,10 @@ button {
     height: 50px;
     width: 100px;
     margin: 20px;
+}
+
+.on {
+    background-color: #207777;
 }
 
 .button-wrapper {
