@@ -4,7 +4,7 @@ import "./index.css";
 
 const max_row = 30,
     max_col = 40;
-// 0:free    1:start      2:end       3:obstacle      4:open list   5:closed list
+// 0:free    1:start      2:end       3:obstacle      4:open list   5:closed list   6:path
 const cell_class = [
     "cell", //0: free space
     "cell start", //1: start node
@@ -12,7 +12,10 @@ const cell_class = [
     "cell obstacle", //3: obstacle
     "cell open", //4: open list
     "cell closed", //5: closed list
+    "cell path", //6: path
 ];
+
+const button_class = ["off", "on"]; //0: off button; 1: on button
 
 const col_index = [],
     row_index = [];
@@ -47,17 +50,13 @@ class Node {
         this.gCost = gCost;
     }
 
-    set new_parent({ c1, c2 }) {
-        this.parent.c1 = c1;
-        this.parent.c2 = c2;
+    set new_parent({ p1, p2 }) {
+        this.parent.c1 = p1;
+        this.parent.c2 = p2;
     }
 }
 const array_cols = Array(max_col).fill(0);
-
-const open = []; //open list that stores open nodes
-const closed = Array(max_row)
-    .fill(null)
-    .map(() => Array.from(array_cols)); //0: not on closed list; 1: on closed list;
+const null_cols = Array(max_col).fill(null);
 
 const node_cols = Array(max_col).fill(new Node(0));
 
@@ -74,7 +73,11 @@ function Cell(props) {
 
 function Start_point(props) {
     return (
-        <button id="startpoint-button" onClick={props.onClick}>
+        <button
+            className={button_class[props.on]}
+            id="startpoint-button"
+            onClick={props.onClick}
+        >
             Starting Point
         </button>
     );
@@ -93,10 +96,10 @@ function Find_path(props) {
         </button>
     );
 }
-function Next_step(props) {
+function Reset(props) {
     return (
-        <button id="nextstep-button" onClick={props.onClick}>
-            Next step
+        <button id="reset-button" onClick={props.onClick}>
+            Reset
         </button>
     );
 }
@@ -106,6 +109,8 @@ class Grid extends React.Component {
         super(props);
         this.state = {
             pressed: false,
+            finding_path: false,
+            finished: false,
             start: { c1: 0, c2: 0 },
             end: { c1: max_row - 1, c2: max_col - 1 },
             //cells stores the state of each cell (0:free space; 1:start; 2:end; 3:obstacle)
@@ -115,6 +120,7 @@ class Grid extends React.Component {
                 .map(() => Array.from(array_cols)),
             object: 3,
         };
+        this.baseState = this.state;
     }
 
     renderCell(i, j) {
@@ -136,10 +142,13 @@ class Grid extends React.Component {
     renderButtons() {
         return (
             <div>
-                <Start_point onClick={() => this.handleStartButton()} />
+                <Start_point
+                    on={this.state.object === 1}
+                    onClick={() => this.handleStartButton()}
+                />
                 <End_point onClick={() => this.handleEndButton()} />
                 <Find_path onClick={() => this.handlefindpath()} />
-                <Next_step onClick={() => this.handleNextstep()} />
+                <Reset onClick={() => this.handleReset()} />
             </div>
         );
     }
@@ -170,23 +179,24 @@ class Grid extends React.Component {
 
     handlePress(i, j) {
         const cells = Array.from(this.state.cells);
-        const start = this.state.start;
-        const end = this.state.end;
-        cells[i][j] = this.state.object;
-
+        if (this.state.finished) return;
         if (this.state.object === 3) {
+            cells[i][j] = this.state.object;
             this.setState({
                 pressed: !this.state.pressed,
                 cells: cells,
             });
-        } else {
+        } else if (!this.state.finding_path) {
+            cells[i][j] = this.state.object;
             if (this.state.object === 1) {
+                const start = this.state.start;
                 cells[start.c1][start.c2] = 0;
                 this.setState({
                     start: { c1: i, c2: j },
                     cells: cells,
                 });
             } else if (this.state.object === 2) {
+                const end = this.state.end;
                 cells[end.c1][end.c2] = 0;
                 this.setState({
                     end: { c1: i, c2: j },
@@ -197,6 +207,7 @@ class Grid extends React.Component {
     }
 
     handleRelease() {
+        if (this.state.finished) return;
         if (this.state.object !== 1 && this.state.object !== 2) {
             this.setState({
                 pressed: !this.state.pressed,
@@ -217,6 +228,15 @@ class Grid extends React.Component {
     handlefindpath() {
         // const open = []; //open list that stores open nodes
         //const closed = Array(max_row)
+        if (this.state.finished) return;
+        this.setState({
+            finding_path: !this.state.finding_path,
+            finished: !this.state.finished,
+        });
+        const open = []; //open list that stores open nodes
+        const closed = Array(max_row)
+            .fill(null)
+            .map(() => Array.from(null_cols)); //null: not on closed list; otherwise: on closed list
 
         const cells = this.state.cells;
         const start = this.state.start;
@@ -229,31 +249,72 @@ class Grid extends React.Component {
             { p1: start.c1, p2: start.c2 }
         );
         open.push(start_node);
-
-        // while (!closed[this.state.end.c1][this.state.end.c2]) {
-        // setTimeout(
-        //     () => findpath(cells, start, this.state.end, open, closed),
-        //     250
-        // );
-        // findpath(cells, start, end, open, closed);
-        // this.setState({
-        //     cells: cells,
-        // });
-        this.handleNextstep(cells, start, end);
-        // }
+        findpath(cells, start, end, open, closed); //first step
+        cells[start.c1][start.c2] = 1;
+        this.showNextstep(cells, start, end, open, closed);
     }
 
-    handleNextstep(cells, start, end) {
-        // const cells = this.state.cells;
-        // const start = this.state.start;
-        // const end = this.state.end;
+    showNextstep(cells, start, end, open, closed) {
         findpath(cells, start, end, open, closed);
         this.setState({
             cells: cells,
         });
-        if (closed[end.c1][end.c2]) return;
-        setTimeout(() => this.handleNextstep(cells, start, end), 50);
+        if (closed[end.c1][end.c2]) {
+            cells[end.c1][end.c2] = 2;
+            this.showPath(cells, start, end, closed, {
+                c1: closed[end.c1][end.c2].parent.c1,
+                c2: closed[end.c1][end.c2].parent.c2,
+            });
+            // console.log(closed[end.c1][end.c2].parent);
+            // return;
+        } else
+            setTimeout(
+                () => this.showNextstep(cells, start, end, open, closed),
+                10
+            );
+        //showPath(cells, start, end, closed);
     }
+
+    showPath(cells, start, end, closed, prevCell) {
+        cells[prevCell.c1][prevCell.c2] = 6;
+        prevCell.c1 = closed[prevCell.c1][prevCell.c2].parent.c1;
+        prevCell.c2 = closed[prevCell.c1][prevCell.c2].parent.c2;
+        this.setState({
+            cells: cells,
+        });
+        if (prevCell.c1 === start.c1 && prevCell.c2 === start.c2) {
+            this.setState({
+                finding_path: !this.state.finding_path,
+                object: 0,
+            });
+        } else {
+            setTimeout(
+                () => this.showPath(cells, start, end, closed, prevCell),
+                5
+            );
+        }
+    }
+
+    updateCells(cells) {
+        this.setState({
+            cells: cells,
+        });
+    }
+
+    handleReset = () => {
+        console.log("yes");
+        this.setState({
+            pressed: false,
+            finding_path: false,
+            finished: false,
+            start: { c1: 0, c2: 0 },
+            end: { c1: max_row - 1, c2: max_col - 1 },
+            cells: Array(max_row)
+                .fill(null)
+                .map(() => Array.from(array_cols)),
+            object: 3,
+        });
+    };
 
     render() {
         const rows = [];
@@ -295,14 +356,14 @@ function findpath(cells, start, end, open, closed) {
     const current = open[index];
     open.splice(index, 1); //remove the node with smallest fcost from open list
     cells[current.c1][current.c2] = 5;
-    closed[current.c1][current.c2] = 1; //add the node to closed list
+    closed[current.c1][current.c2] = current; //add the node to closed list
 
     operations.forEach(([x, y]) => {
         const c1 = current.c1 + x,
             c2 = current.c2 + y;
         if (c1 >= max_row || c1 < 0 || c2 >= max_col || c2 < 0) return;
 
-        if (closed[c1][c2] !== 1 && cells[c1][c2] !== 3) {
+        if (!closed[c1][c2] && cells[c1][c2] !== 3) {
             //if not on open list, add to open list
             //and make the current cell the parent of this cell
             //record the f,g,h costs of this cell
@@ -317,7 +378,7 @@ function findpath(cells, start, end, open, closed) {
                     { c1: c1, c2: c2 },
                     1 + current.gCost,
                     distance(end, { c1: c1, c2: c2 }),
-                    { p1: current.c1, c2: current.c2 }
+                    { p1: current.c1, p2: current.c2 }
                 );
                 open.push(node);
                 cells[c1][c2] = 4;
@@ -327,12 +388,11 @@ function findpath(cells, start, end, open, closed) {
                 // const existing = open[i];
                 if (current.gCost + 1 < open[i].gCost) {
                     open[i].new_gCost = current.gCost + 1;
-                    open[i].parent = { p1: current.c1, p2: current.c2 };
+                    open[i].new_parent = { p1: current.c1, p2: current.c2 };
                 }
             }
         }
     });
-    // updateCells(cells, open, closed);
 }
 
 function distance(a, b) {
