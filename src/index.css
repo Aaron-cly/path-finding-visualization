@@ -1,5 +1,5 @@
 :root {
-    --cellSize: 20px;
+    --cellSize: 25px;
     background-color: #ddcb9b;
 }
 
@@ -29,10 +29,10 @@
     background-color: rgb(159, 248, 159);
 }
 .closed {
-    background-color: rgb(236, 161, 233);
+    background-color: rgb(233, 190, 231);
 }
 .path {
-    background-color: #912fa5;
+    background-color: #d400ff;
 }
 
 .grid {

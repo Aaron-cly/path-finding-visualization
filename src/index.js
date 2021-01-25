@@ -25,7 +25,7 @@ const cell_class = [
     "cell path", //6: path
 ];
 
-const move_interval = 1; //in ms how long each moves waits until next move displays
+const move_interval = 0; //in ms how long each moves waits until next move displays
 
 const button_class = ["off", "on"]; //0: off button; 1: on button
 
@@ -122,6 +122,7 @@ class Grid extends React.Component {
             pressed: false,
             finding_path: false,
             finished: false,
+            erasing_wall: false,
             start: { c1: default_start.c1, c2: default_start.c2 },
             end: { c1: default_end.c1, c2: default_end.c2 },
             //cells stores the state of each cell (0:free space; 1:start; 2:end; 3:obstacle)
@@ -205,20 +206,36 @@ class Grid extends React.Component {
                 object: 2,
             });
         } else {
-            cells[i][j] = 3; //obstacle
-            this.setState({
-                pressed: !this.state.pressed,
-                object: 3,
-                cells: cells,
-            });
+            if (cells[i][j] === 3) {
+                cells[i][j] = 0;
+                this.setState({
+                    pressed: !this.state.pressed,
+                    erasing_wall: !this.state.erasing_wall,
+                    cells: cells,
+                });
+            } else {
+                cells[i][j] = 3; //obstacle
+                this.setState({
+                    pressed: !this.state.pressed,
+                    object: 3,
+                    cells: cells,
+                });
+            }
         }
     }
 
     handleRelease() {
         if (this.state.finished) return;
-        this.setState({
-            pressed: !this.state.pressed,
-        });
+        if (this.state.erasing_wall)
+            this.setState({
+                erasing_wall: !this.state.erasing_wall,
+                pressed: !this.state.pressed,
+            });
+        else {
+            this.setState({
+                pressed: !this.state.pressed,
+            });
+        }
     }
 
     handleSelect(i, j) {
@@ -242,10 +259,23 @@ class Grid extends React.Component {
                     });
                     break;
                 case 3:
-                    cells[i][j] = 3;
-                    this.setState({
-                        cells: cells,
-                    });
+                    if (
+                        (i !== this.state.start.c1 ||
+                            j !== this.state.start.c2) &&
+                        (i !== this.state.end.c1 || j !== this.state.end.c2)
+                    ) {
+                        if (cells[i][j] === 0 && !this.state.erasing_wall) {
+                            cells[i][j] = 3;
+                        } else if (
+                            cells[i][j] === 3 &&
+                            this.state.erasing_wall
+                        ) {
+                            cells[i][j] = 0;
+                        }
+                        this.setState({
+                            cells: cells,
+                        });
+                    }
             }
         }
     }
@@ -272,7 +302,8 @@ class Grid extends React.Component {
         open.push(start_node);
         findpath(cells, start, end, open, closed); //first step
         cells[start.c1][start.c2] = 1;
-        this.showNextstep(cells, start, end, open, closed);
+        if (open.length !== 0)
+            this.showNextstep(cells, start, end, open, closed);
     }
 
     showNextstep(cells, start, end, open, closed) {
@@ -280,12 +311,18 @@ class Grid extends React.Component {
         this.setState({
             cells: cells,
         });
-        if (closed[end.c1][end.c2]) {
-            cells[end.c1][end.c2] = 2;
-            this.showPath(cells, start, end, closed, {
-                c1: closed[end.c1][end.c2].parent.c1,
-                c2: closed[end.c1][end.c2].parent.c2,
-            });
+        if (closed[end.c1][end.c2] || open.length === 0) {
+            if (open.length === 0) {
+                this.setState({
+                    finding_path: !this.state.finding_path,
+                });
+            } else {
+                cells[end.c1][end.c2] = 2;
+                this.showPath(cells, start, end, closed, {
+                    c1: closed[end.c1][end.c2].parent.c1,
+                    c2: closed[end.c1][end.c2].parent.c2,
+                });
+            }
         } else
             setTimeout(
                 () => this.showNextstep(cells, start, end, open, closed),
@@ -303,6 +340,7 @@ class Grid extends React.Component {
         this.setState({
             cells: cells,
         });
+
         if (prevCell.c1 === start.c1 && prevCell.c2 === start.c2) {
             this.setState({
                 finding_path: !this.state.finding_path,
@@ -316,13 +354,8 @@ class Grid extends React.Component {
         }
     }
 
-    updateCells(cells) {
-        this.setState({
-            cells: cells,
-        });
-    }
-
     handleReset = () => {
+        if (this.state.finding_path) return;
         const cells = Array(max_row)
             .fill(null)
             .map(() => Array.from(array_cols));
@@ -363,13 +396,12 @@ class Grid extends React.Component {
                 <p className="info">
                     Drag to move starting point(blue) and target point(red)
                 </p>
+                <p className="info">Draw walls on white cells</p>
                 <div className="button-wrapper">{this.renderButtons()}</div>
             </>
         );
     }
 }
-
-ReactDOM.render(<Grid />, document.getElementById("root"));
 
 function findpath(cells, start, end, open, closed) {
     //look for the lowest f on open list
@@ -453,3 +485,5 @@ const operations = [
     [1, 1],
     [-1, -1],
 ];
+
+ReactDOM.render(<Grid />, document.getElementById("root"));
