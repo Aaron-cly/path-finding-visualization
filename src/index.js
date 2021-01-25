@@ -386,6 +386,14 @@ function findpath(cells, start, end, open, closed) {
         if (c1 >= max_row || c1 < 0 || c2 >= max_col || c2 < 0) return;
 
         if (!closed[c1][c2] && cells[c1][c2] !== 3) {
+            if (
+                x !== 0 &&
+                y !== 0 &&
+                cells[c1][current.c2] === 3 &&
+                cells[current.c1][c2] === 3
+            ) {
+                return;
+            }
             //if not on open list, add to open list
             //and make the current cell the parent of this cell
             //record the f,g,h costs of this cell
@@ -421,9 +429,6 @@ function findpath(cells, start, end, open, closed) {
 }
 
 function distance(a, b) {
-    //return Math.sqrt(Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2));
-    //return Math.abs(a.c1 - b.c1) + Math.abs(a.c2 - b.c2);
-    // return Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2);
     const diag_move = Math.min(Math.abs(a.c1 - b.c1), Math.abs(a.c2 - b.c2));
     const hori_or_vert_move =
         Math.max(Math.abs(a.c1 - b.c1), Math.abs(a.c2 - b.c2)) - diag_move;
