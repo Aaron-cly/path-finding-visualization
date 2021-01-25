@@ -2,20 +2,19 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
-const max_row = 30,
+const max_row = 20,
     max_col = 50;
 
 const default_start = {
-    c1: 0,
-    c2: 0,
+    c1: Math.floor(max_row / 2),
+    c2: Math.floor(max_col / 2) - 10,
 };
 
 const default_end = {
-    c1: max_row - 1,
-    c2: max_col - 1,
+    c1: Math.floor(max_row / 2),
+    c2: Math.floor(max_col / 2) + 10,
 };
 
-// 0:free    1:start      2:end       3:obstacle      4:open list   5:closed list   6:path
 const cell_class = [
     "cell", //0: free space
     "cell start", //1: start node
@@ -25,6 +24,8 @@ const cell_class = [
     "cell closed", //5: closed list
     "cell path", //6: path
 ];
+
+const move_interval = 1; //in ms how long each moves waits until next move displays
 
 const button_class = ["off", "on"]; //0: off button; 1: on button
 
@@ -90,13 +91,22 @@ function Clear_Wall(props) {
     );
 }
 
-function Find_path(props) {
+function Find_Path(props) {
     return (
         <button id="findpath-button" onClick={props.onClick}>
             Find Path
         </button>
     );
 }
+
+function Clear_Path(props) {
+    return (
+        <button id="clearpath-button" onClick={props.onClick}>
+            Clear Path
+        </button>
+    );
+}
+
 function Reset(props) {
     return (
         <button id="reset-button" onClick={props.onClick}>
@@ -147,8 +157,9 @@ class Grid extends React.Component {
         return (
             <div>
                 <Clear_Wall onClick={() => this.handleClearWall()} />
+                <Clear_Path onClick={() => this.handleClearPath()} />
                 <Reset onClick={() => this.handleReset()} />
-                <Find_path onClick={() => this.handlefindpath()} />
+                <Find_Path onClick={() => this.handlefindpath()} />
             </div>
         );
     }
@@ -160,6 +171,21 @@ class Grid extends React.Component {
                 if (cells[i][j] === 3) cells[i][j] = 0;
         }
         this.setState({
+            cells: cells,
+        });
+    }
+
+    handleClearPath() {
+        const cells = this.state.cells;
+        for (let i = 0; i < max_row; ++i) {
+            for (let j = 0; j < max_col; ++j)
+                if (cells[i][j] === 4 || cells[i][j] === 5 || cells[i][j] === 6)
+                    cells[i][j] = 0;
+        }
+        this.setState({
+            finished: this.state.finished
+                ? !this.state.finished
+                : this.state.finished,
             cells: cells,
         });
     }
@@ -263,7 +289,7 @@ class Grid extends React.Component {
         } else
             setTimeout(
                 () => this.showNextstep(cells, start, end, open, closed),
-                5
+                move_interval
             );
     }
 
@@ -335,7 +361,7 @@ class Grid extends React.Component {
             <>
                 <div className="grid">{rows}</div>
                 <p className="info">
-                    Drag to move starting point(yellow) and target point(red)
+                    Drag to move starting point(blue) and target point(red)
                 </p>
                 <div className="button-wrapper">{this.renderButtons()}</div>
             </>

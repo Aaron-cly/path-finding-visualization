@@ -15,7 +15,7 @@
 }
 
 .start {
-    background-color: #ecfa28;
+    background-color: blue;
 }
 
 .end {
@@ -26,13 +26,13 @@
     background-color: black;
 }
 .open {
-    background-color: lime;
+    background-color: rgb(159, 248, 159);
 }
 .closed {
-    background-color: rgb(236, 136, 231);
+    background-color: rgb(236, 161, 233);
 }
 .path {
-    background-color: #9d11ee;
+    background-color: #912fa5;
 }
 
 .grid {
