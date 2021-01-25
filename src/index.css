@@ -50,7 +50,13 @@
 button {
     height: 50px;
     width: 100px;
-    margin: 20px;
+    margin-right: 20px;
+}
+
+#findpath-button {
+    background-color: #619dac;
+    color: white;
+    margin-left: 80px;
 }
 
 .on {
