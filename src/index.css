@@ -19,7 +19,7 @@
 }
 
 .end {
-    background-color: blue;
+    background-color: red;
 }
 
 .obstacle {
@@ -29,7 +29,7 @@
     background-color: lime;
 }
 .closed {
-    background-color: red;
+    background-color: rgb(236, 136, 231);
 }
 .path {
     background-color: #9d11ee;
