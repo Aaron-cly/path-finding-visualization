@@ -4,6 +4,17 @@ import "./index.css";
 
 const max_row = 30,
     max_col = 40;
+
+const default_start = {
+    c1: 0,
+    c2: 0,
+};
+
+const default_end = {
+    c1: max_row - 1,
+    c2: max_col - 1,
+};
+
 // 0:free    1:start      2:end       3:obstacle      4:open list   5:closed list   6:path
 const cell_class = [
     "cell", //0: free space
@@ -111,8 +122,8 @@ class Grid extends React.Component {
             pressed: false,
             finding_path: false,
             finished: false,
-            start: { c1: 0, c2: 0 },
-            end: { c1: max_row - 1, c2: max_col - 1 },
+            start: { c1: default_start.c1, c2: default_start.c2 },
+            end: { c1: default_end.c1, c2: default_end.c2 },
             //cells stores the state of each cell (0:free space; 1:start; 2:end; 3:obstacle)
             //cells: Array(max_row * max_col).fill(0),
             cells: Array(max_row)
@@ -242,19 +253,17 @@ class Grid extends React.Component {
         const start = this.state.start;
         const end = this.state.end;
 
-        const start_node = new Node(
-            { c1: start.c1, c2: start.c2 },
-            0,
-            distance(start, end),
-            { p1: start.c1, p2: start.c2 }
-        );
+        const start_node = new Node({ c1: start.c1, c2: start.c2 }, 0, 0, {
+            p1: start.c1,
+            p2: start.c2,
+        });
         open.push(start_node);
         findpath(cells, start, end, open, closed); //first step
         cells[start.c1][start.c2] = 1;
-        this.showNextstep(cells, start, end, open, closed);
+        this.showNextstep(cells, start, end, open, closed, 0);
     }
 
-    showNextstep(cells, start, end, open, closed) {
+    showNextstep(cells, start, end, open, closed, count) {
         findpath(cells, start, end, open, closed);
         this.setState({
             cells: cells,
@@ -265,11 +274,17 @@ class Grid extends React.Component {
                 c1: closed[end.c1][end.c2].parent.c1,
                 c2: closed[end.c1][end.c2].parent.c2,
             });
-            // console.log(closed[end.c1][end.c2].parent);
-            // return;
         } else
             setTimeout(
-                () => this.showNextstep(cells, start, end, open, closed),
+                () =>
+                    this.showNextstep(
+                        cells,
+                        start,
+                        end,
+                        open,
+                        closed,
+                        count + 1
+                    ),
                 10
             );
         //showPath(cells, start, end, closed);
@@ -277,8 +292,11 @@ class Grid extends React.Component {
 
     showPath(cells, start, end, closed, prevCell) {
         cells[prevCell.c1][prevCell.c2] = 6;
-        prevCell.c1 = closed[prevCell.c1][prevCell.c2].parent.c1;
-        prevCell.c2 = closed[prevCell.c1][prevCell.c2].parent.c2;
+        prevCell = {
+            c1: closed[prevCell.c1][prevCell.c2].parent.c1,
+            c2: closed[prevCell.c1][prevCell.c2].parent.c2,
+        };
+
         this.setState({
             cells: cells,
         });
@@ -307,8 +325,8 @@ class Grid extends React.Component {
             pressed: false,
             finding_path: false,
             finished: false,
-            start: { c1: 0, c2: 0 },
-            end: { c1: max_row - 1, c2: max_col - 1 },
+            start: { c1: default_start.c1, c2: default_start.c2 },
+            end: { c1: default_end.c1, c2: default_end.c2 },
             cells: Array(max_row)
                 .fill(null)
                 .map(() => Array.from(array_cols)),
@@ -349,8 +367,12 @@ function findpath(cells, start, end, open, closed) {
     //look for the lowest f on open list
     let index = 0;
     for (let i = 1; i < open.length; ++i) {
-        if (open[i].fCost <= open[index].fCost) {
+        if (open[i].fCost < open[index].fCost) {
             index = i;
+        } else if (open[i].fCost == open[index].fCost) {
+            if (open[i].hCost < open[index].hCost) {
+                index = i;
+            }
         }
     }
     const current = open[index];
@@ -376,7 +398,7 @@ function findpath(cells, start, end, open, closed) {
                 //if this neigbor cell is not on open list
                 const node = new Node(
                     { c1: c1, c2: c2 },
-                    1 + current.gCost,
+                    distance(current, { c1: c1, c2: c2 }) + current.gCost,
                     distance(end, { c1: c1, c2: c2 }),
                     { p1: current.c1, p2: current.c2 }
                 );
@@ -385,9 +407,12 @@ function findpath(cells, start, end, open, closed) {
             } else {
                 //if this neighbor cell is on open already
                 //compare gcost
-                // const existing = open[i];
-                if (current.gCost + 1 < open[i].gCost) {
-                    open[i].new_gCost = current.gCost + 1;
+                if (
+                    current.gCost + distance(current, { c1: c1, c2: c2 }) <
+                    open[i].gCost
+                ) {
+                    open[i].new_gCost =
+                        current.gCost + distance(current, { c1: c1, c2: c2 });
                     open[i].new_parent = { p1: current.c1, p2: current.c2 };
                 }
             }
@@ -396,14 +421,24 @@ function findpath(cells, start, end, open, closed) {
 }
 
 function distance(a, b) {
-    return Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2);
+    //return Math.sqrt(Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2));
+    //return Math.abs(a.c1 - b.c1) + Math.abs(a.c2 - b.c2);
+    // return Math.pow(a.c1 - b.c1, 2) + Math.pow(a.c2 - b.c2, 2);
+    const diag_move = Math.min(Math.abs(a.c1 - b.c1), Math.abs(a.c2 - b.c2));
+    const hori_or_vert_move =
+        Math.max(Math.abs(a.c1 - b.c1), Math.abs(a.c2 - b.c2)) - diag_move;
+    return diag_move * 14 + hori_or_vert_move * 10;
 }
 
 const operations = [
-    [1, 0],
     [0, 1],
     [0, -1],
+    [1, 0],
     [-1, 0],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+    [-1, -1],
 ];
 
 const insert_element = (arr, element) => {
