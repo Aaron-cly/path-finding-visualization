@@ -340,6 +340,7 @@ class Grid extends React.Component {
         this.setState({
             cells: cells,
         });
+
         if (prevCell.c1 === start.c1 && prevCell.c2 === start.c2) {
             this.setState({
                 finding_path: !this.state.finding_path,
@@ -353,13 +354,8 @@ class Grid extends React.Component {
         }
     }
 
-    updateCells(cells) {
-        this.setState({
-            cells: cells,
-        });
-    }
-
     handleReset = () => {
+        if (this.state.finding_path) return;
         const cells = Array(max_row)
             .fill(null)
             .map(() => Array.from(array_cols));
@@ -406,8 +402,6 @@ class Grid extends React.Component {
         );
     }
 }
-
-ReactDOM.render(<Grid />, document.getElementById("root"));
 
 function findpath(cells, start, end, open, closed) {
     //look for the lowest f on open list
@@ -491,3 +485,5 @@ const operations = [
     [1, 1],
     [-1, -1],
 ];
+
+ReactDOM.render(<Grid />, document.getElementById("root"));
