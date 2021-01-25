@@ -1,5 +1,5 @@
 :root {
-    --cellSize: 25px;
+    --cellSize: 20px;
     background-color: #ddcb9b;
 }
 
@@ -39,18 +39,26 @@
     height: auto;
     width: auto;
     overflow: hidden;
+    margin-left: 5px;
 }
 
 .grid-row {
     float: left;
     display: flex;
-    width: calc((var(--cellSize)) * 80);
 }
 
 button {
     height: 50px;
-    width: 100px;
+    width: 150px;
     margin-right: 20px;
+    font-size: 20px;
+    -webkit-animation: myanim2 1s 1.8s backwards;
+    animation: myanim2 1s 1.8s backwards;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: cyan;
 }
 
 #findpath-button {
@@ -59,8 +67,10 @@ button {
     margin-left: 80px;
 }
 
-.on {
-    background-color: #207777;
+.info {
+    width: 50%;
+    font-size: 25px;
+    text-align: center;
 }
 
 .button-wrapper {

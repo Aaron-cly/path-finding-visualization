@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
-const max_row = 20,
+const max_row = 25,
     max_col = 50;
 
 const default_start = {
@@ -26,8 +26,6 @@ const cell_class = [
 ];
 
 const move_interval = 0; //in ms how long each moves waits until next move displays
-
-const button_class = ["off", "on"]; //0: off button; 1: on button
 
 const col_index = [],
     row_index = [];
@@ -69,8 +67,6 @@ class Node {
 }
 const array_cols = Array(max_col).fill(0);
 const null_cols = Array(max_col).fill(null);
-
-const node_cols = Array(max_col).fill(new Node(0));
 
 function Cell(props) {
     return (
@@ -276,6 +272,7 @@ class Grid extends React.Component {
                             cells: cells,
                         });
                     }
+                    break;
             }
         }
     }
@@ -393,10 +390,12 @@ class Grid extends React.Component {
         return (
             <>
                 <div className="grid">{rows}</div>
-                <p className="info">
-                    Drag to move starting point(blue) and target point(red)
-                </p>
-                <p className="info">Draw walls on white cells</p>
+                <div className="info">
+                    <p>
+                        Drag to move starting point(blue) and target point(red).
+                    </p>
+                    <p>Draw walls on white cells.</p>
+                </div>
                 <div className="button-wrapper">{this.renderButtons()}</div>
             </>
         );
@@ -409,7 +408,7 @@ function findpath(cells, start, end, open, closed) {
     for (let i = 1; i < open.length; ++i) {
         if (open[i].fCost < open[index].fCost) {
             index = i;
-        } else if (open[i].fCost == open[index].fCost) {
+        } else if (open[i].fCost === open[index].fCost) {
             if (open[i].hCost < open[index].hCost) {
                 index = i;
             }
