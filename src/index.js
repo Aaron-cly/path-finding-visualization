@@ -2,20 +2,19 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
-const max_row = 30,
-    max_col = 40;
+const max_row = 20,
+    max_col = 50;
 
 const default_start = {
-    c1: 0,
-    c2: 0,
+    c1: Math.floor(max_row / 2),
+    c2: Math.floor(max_col / 2) - 10,
 };
 
 const default_end = {
-    c1: max_row - 1,
-    c2: max_col - 1,
+    c1: Math.floor(max_row / 2),
+    c2: Math.floor(max_col / 2) + 10,
 };
 
-// 0:free    1:start      2:end       3:obstacle      4:open list   5:closed list   6:path
 const cell_class = [
     "cell", //0: free space
     "cell start", //1: start node
@@ -25,6 +24,8 @@ const cell_class = [
     "cell closed", //5: closed list
     "cell path", //6: path
 ];
+
+const move_interval = 1; //in ms how long each moves waits until next move displays
 
 const button_class = ["off", "on"]; //0: off button; 1: on button
 
@@ -82,31 +83,30 @@ function Cell(props) {
     );
 }
 
-function Start_point(props) {
+function Clear_Wall(props) {
     return (
-        <button
-            className={button_class[props.on]}
-            id="startpoint-button"
-            onClick={props.onClick}
-        >
-            Starting Point
+        <button id="clearwall-button" onClick={props.onClick}>
+            Clear Wall
         </button>
     );
 }
-function End_point(props) {
-    return (
-        <button id="endpoint-button" onClick={props.onClick}>
-            End Point
-        </button>
-    );
-}
-function Find_path(props) {
+
+function Find_Path(props) {
     return (
         <button id="findpath-button" onClick={props.onClick}>
             Find Path
         </button>
     );
 }
+
+function Clear_Path(props) {
+    return (
+        <button id="clearpath-button" onClick={props.onClick}>
+            Clear Path
+        </button>
+    );
+}
+
 function Reset(props) {
     return (
         <button id="reset-button" onClick={props.onClick}>
@@ -125,13 +125,17 @@ class Grid extends React.Component {
             start: { c1: default_start.c1, c2: default_start.c2 },
             end: { c1: default_end.c1, c2: default_end.c2 },
             //cells stores the state of each cell (0:free space; 1:start; 2:end; 3:obstacle)
-            //cells: Array(max_row * max_col).fill(0),
             cells: Array(max_row)
                 .fill(null)
                 .map(() => Array.from(array_cols)),
             object: 3,
         };
-        this.baseState = this.state;
+        const cells = this.state.cells;
+        cells[this.state.start.c1][this.state.start.c2] = 1;
+        cells[this.state.end.c1][this.state.end.c2] = 2;
+        this.setState({
+            cells: cells,
+        });
     }
 
     renderCell(i, j) {
@@ -139,7 +143,6 @@ class Grid extends React.Component {
         return (
             <Cell
                 key={key}
-                //value_row * max_col + value_col;
                 c1={i}
                 c2={j}
                 value={this.state.cells[i][j]}
@@ -153,92 +156,101 @@ class Grid extends React.Component {
     renderButtons() {
         return (
             <div>
-                <Start_point
-                    on={this.state.object === 1}
-                    onClick={() => this.handleStartButton()}
-                />
-                <End_point onClick={() => this.handleEndButton()} />
-                <Find_path onClick={() => this.handlefindpath()} />
+                <Clear_Wall onClick={() => this.handleClearWall()} />
+                <Clear_Path onClick={() => this.handleClearPath()} />
                 <Reset onClick={() => this.handleReset()} />
+                <Find_Path onClick={() => this.handlefindpath()} />
             </div>
         );
     }
 
-    handleStartButton() {
-        if (this.state.object !== 1) {
-            this.setState({
-                object: 1,
-            });
-        } else {
-            this.setState({
-                object: 3,
-            });
+    handleClearWall() {
+        const cells = this.state.cells;
+        for (let i = 0; i < max_row; ++i) {
+            for (let j = 0; j < max_col; ++j)
+                if (cells[i][j] === 3) cells[i][j] = 0;
         }
+        this.setState({
+            cells: cells,
+        });
     }
 
-    handleEndButton() {
-        if (this.state.object !== 2) {
-            this.setState({
-                object: 2,
-            });
-        } else {
-            this.setState({
-                object: 3,
-            });
+    handleClearPath() {
+        const cells = this.state.cells;
+        for (let i = 0; i < max_row; ++i) {
+            for (let j = 0; j < max_col; ++j)
+                if (cells[i][j] === 4 || cells[i][j] === 5 || cells[i][j] === 6)
+                    cells[i][j] = 0;
         }
+        this.setState({
+            finished: this.state.finished
+                ? !this.state.finished
+                : this.state.finished,
+            cells: cells,
+        });
     }
 
     handlePress(i, j) {
         const cells = Array.from(this.state.cells);
         if (this.state.finished) return;
-        if (this.state.object === 3) {
-            cells[i][j] = this.state.object;
+
+        if (i === this.state.start.c1 && j === this.state.start.c2) {
             this.setState({
                 pressed: !this.state.pressed,
+                object: 1,
+            });
+        } else if (i === this.state.end.c1 && j === this.state.end.c2) {
+            this.setState({
+                pressed: !this.state.pressed,
+                object: 2,
+            });
+        } else {
+            cells[i][j] = 3; //obstacle
+            this.setState({
+                pressed: !this.state.pressed,
+                object: 3,
                 cells: cells,
             });
-        } else if (!this.state.finding_path) {
-            cells[i][j] = this.state.object;
-            if (this.state.object === 1) {
-                const start = this.state.start;
-                cells[start.c1][start.c2] = 0;
-                this.setState({
-                    start: { c1: i, c2: j },
-                    cells: cells,
-                });
-            } else if (this.state.object === 2) {
-                const end = this.state.end;
-                cells[end.c1][end.c2] = 0;
-                this.setState({
-                    end: { c1: i, c2: j },
-                    cells: cells,
-                });
-            }
         }
     }
 
     handleRelease() {
         if (this.state.finished) return;
-        if (this.state.object !== 1 && this.state.object !== 2) {
-            this.setState({
-                pressed: !this.state.pressed,
-            });
-        }
+        this.setState({
+            pressed: !this.state.pressed,
+        });
     }
 
     handleSelect(i, j) {
-        if (this.state.pressed && this.state.object === 3) {
-            const cells = Array.from(this.state.cells);
-            cells[i][j] = 3;
-            this.setState({
-                cells: cells,
-            });
+        if (this.state.pressed) {
+            const cells = this.state.cells;
+            switch (this.state.object) {
+                case 1:
+                    cells[this.state.start.c1][this.state.start.c2] = 0;
+                    cells[i][j] = 1;
+                    this.setState({
+                        start: { c1: i, c2: j },
+                        cells: cells,
+                    });
+                    break;
+                case 2:
+                    cells[this.state.end.c1][this.state.end.c2] = 0;
+                    cells[i][j] = 2;
+                    this.setState({
+                        end: { c1: i, c2: j },
+                        cells: cells,
+                    });
+                    break;
+                case 3:
+                    cells[i][j] = 3;
+                    this.setState({
+                        cells: cells,
+                    });
+            }
         }
     }
 
     handlefindpath() {
-        // const open = []; //open list that stores open nodes
-        //const closed = Array(max_row)
         if (this.state.finished) return;
         this.setState({
             finding_path: !this.state.finding_path,
@@ -260,10 +272,10 @@ class Grid extends React.Component {
         open.push(start_node);
         findpath(cells, start, end, open, closed); //first step
         cells[start.c1][start.c2] = 1;
-        this.showNextstep(cells, start, end, open, closed, 0);
+        this.showNextstep(cells, start, end, open, closed);
     }
 
-    showNextstep(cells, start, end, open, closed, count) {
+    showNextstep(cells, start, end, open, closed) {
         findpath(cells, start, end, open, closed);
         this.setState({
             cells: cells,
@@ -276,18 +288,9 @@ class Grid extends React.Component {
             });
         } else
             setTimeout(
-                () =>
-                    this.showNextstep(
-                        cells,
-                        start,
-                        end,
-                        open,
-                        closed,
-                        count + 1
-                    ),
-                10
+                () => this.showNextstep(cells, start, end, open, closed),
+                move_interval
             );
-        //showPath(cells, start, end, closed);
     }
 
     showPath(cells, start, end, closed, prevCell) {
@@ -320,16 +323,19 @@ class Grid extends React.Component {
     }
 
     handleReset = () => {
-        console.log("yes");
+        const cells = Array(max_row)
+            .fill(null)
+            .map(() => Array.from(array_cols));
+        cells[default_start.c1][default_start.c2] = 1;
+        cells[default_end.c1][default_end.c2] = 2;
+
         this.setState({
             pressed: false,
             finding_path: false,
             finished: false,
             start: { c1: default_start.c1, c2: default_start.c2 },
             end: { c1: default_end.c1, c2: default_end.c2 },
-            cells: Array(max_row)
-                .fill(null)
-                .map(() => Array.from(array_cols)),
+            cells: cells,
             object: 3,
         });
     };
@@ -352,11 +358,13 @@ class Grid extends React.Component {
         }
 
         return (
-            <div>
+            <>
                 <div className="grid">{rows}</div>
+                <p className="info">
+                    Drag to move starting point(blue) and target point(red)
+                </p>
                 <div className="button-wrapper">{this.renderButtons()}</div>
-                <div>{this.state.object}</div>
-            </div>
+            </>
         );
     }
 }
@@ -445,12 +453,3 @@ const operations = [
     [1, 1],
     [-1, -1],
 ];
-
-const insert_element = (arr, element) => {
-    arr.push(element);
-    arr.sort();
-};
-
-//save every move in an array [cells, cells, cells,...]
-//delay function
-//setTimeout(() => function, 250);
