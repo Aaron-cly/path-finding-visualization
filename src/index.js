@@ -131,7 +131,12 @@ class Grid extends React.Component {
                 .map(() => Array.from(array_cols)),
             object: 3,
         };
-        this.baseState = this.state;
+        const cells = this.state.cells;
+        cells[this.state.start.c1][this.state.start.c2] = 1;
+        cells[this.state.end.c1][this.state.end.c2] = 2;
+        this.setState({
+            cells: cells,
+        });
     }
 
     renderCell(i, j) {
@@ -191,48 +196,89 @@ class Grid extends React.Component {
     handlePress(i, j) {
         const cells = Array.from(this.state.cells);
         if (this.state.finished) return;
-        if (this.state.object === 3) {
-            cells[i][j] = this.state.object;
+
+        if (i === this.state.start.c1 && j === this.state.start.c2) {
+            this.setState({
+                pressed: !this.state.pressed,
+                object: 1,
+            });
+        } else if (i === this.state.end.c1 && j === this.state.end.c2) {
+            this.setState({
+                pressed: !this.state.pressed,
+                object: 2,
+            });
+        } else {
+            cells[i][j] = 3; //obstacle
             this.setState({
                 pressed: !this.state.pressed,
                 cells: cells,
             });
-        } else if (!this.state.finding_path) {
-            cells[i][j] = this.state.object;
-            if (this.state.object === 1) {
-                const start = this.state.start;
-                cells[start.c1][start.c2] = 0;
-                this.setState({
-                    start: { c1: i, c2: j },
-                    cells: cells,
-                });
-            } else if (this.state.object === 2) {
-                const end = this.state.end;
-                cells[end.c1][end.c2] = 0;
-                this.setState({
-                    end: { c1: i, c2: j },
-                    cells: cells,
-                });
-            }
+            // if (!this.state.finding_path) {
+            //     cells[i][j] = this.state.object;
+            //     if (this.state.object === 1) {
+            //         const start = this.state.start;
+            //         cells[start.c1][start.c2] = 0;
+            //         this.setState({
+            //             start: { c1: i, c2: j },
+            //             cells: cells,
+            //         });
+            //     } else if (this.state.object === 2) {
+            //         const end = this.state.end;
+            //         cells[end.c1][end.c2] = 0;
+            //         this.setState({
+            //             end: { c1: i, c2: j },
+            //             cells: cells,
+            //         });
+            //     }
+            // }
         }
     }
 
     handleRelease() {
         if (this.state.finished) return;
-        if (this.state.object !== 1 && this.state.object !== 2) {
-            this.setState({
-                pressed: !this.state.pressed,
-            });
-        }
+        // if (this.state.object !== 1 && this.state.object !== 2) {
+        //     this.setState({
+        //         pressed: !this.state.pressed,
+        //     });
+        // }
+        this.setState({
+            pressed: !this.state.pressed,
+        });
     }
 
     handleSelect(i, j) {
-        if (this.state.pressed && this.state.object === 3) {
-            const cells = Array.from(this.state.cells);
-            cells[i][j] = 3;
-            this.setState({
-                cells: cells,
-            });
+        // if (this.state.pressed && this.state.object === 3) {
+        //     const cells = Array.from(this.state.cells);
+        //     cells[i][j] = 3;
+        //     this.setState({
+        //         cells: cells,
+        //     });
+        // }
+        if (this.state.pressed) {
+            const cells = this.state.cells;
+            switch (this.state.object) {
+                case 1:
+                    cells[this.state.start.c1][this.state.start.c2] = 0;
+                    cells[i][j] = 1;
+                    this.setState({
+                        start: { c1: i, c2: j },
+                        cells: cells,
+                    });
+                    break;
+                case 2:
+                    cells[this.state.end.c1][this.state.end.c2] = 0;
+                    cells[i][j] = 2;
+                    this.setState({
+                        end: { c1: i, c2: j },
+                        cells: cells,
+                    });
+                    break;
+                case 3:
+                    cells[i][j] = 3;
+                    this.setState({
+                        cells: cells,
+                    });
+            }
         }
     }
 
@@ -260,10 +306,10 @@ class Grid extends React.Component {
         open.push(start_node);
         findpath(cells, start, end, open, closed); //first step
         cells[start.c1][start.c2] = 1;
-        this.showNextstep(cells, start, end, open, closed, 0);
+        this.showNextstep(cells, start, end, open, closed);
     }
 
-    showNextstep(cells, start, end, open, closed, count) {
+    showNextstep(cells, start, end, open, closed) {
         findpath(cells, start, end, open, closed);
         this.setState({
             cells: cells,
@@ -276,15 +322,7 @@ class Grid extends React.Component {
             });
         } else
             setTimeout(
-                () =>
-                    this.showNextstep(
-                        cells,
-                        start,
-                        end,
-                        open,
-                        closed,
-                        count + 1
-                    ),
+                () => this.showNextstep(cells, start, end, open, closed),
                 10
             );
         //showPath(cells, start, end, closed);
@@ -320,16 +358,19 @@ class Grid extends React.Component {
     }
 
     handleReset = () => {
-        console.log("yes");
+        const cells = Array(max_row)
+            .fill(null)
+            .map(() => Array.from(array_cols));
+        cells[this.state.start.c1][this.state.start.c2] = 1;
+        cells[this.state.end.c1][this.state.end.c2] = 2;
+
         this.setState({
             pressed: false,
             finding_path: false,
             finished: false,
             start: { c1: default_start.c1, c2: default_start.c2 },
             end: { c1: default_end.c1, c2: default_end.c2 },
-            cells: Array(max_row)
-                .fill(null)
-                .map(() => Array.from(array_cols)),
+            cells: cells,
             object: 3,
         });
     };
