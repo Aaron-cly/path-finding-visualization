@@ -25,7 +25,7 @@ const cell_class = [
     "cell path", //6: path
 ];
 
-const move_interval = 1; //in ms how long each moves waits until next move displays
+const move_interval = 0; //in ms how long each moves waits until next move displays
 
 const button_class = ["off", "on"]; //0: off button; 1: on button
 
@@ -242,10 +242,15 @@ class Grid extends React.Component {
                     });
                     break;
                 case 3:
-                    cells[i][j] = 3;
-                    this.setState({
-                        cells: cells,
-                    });
+                    if (
+                        i !== this.state.start.c1 ||
+                        j !== this.state.start.c2
+                    ) {
+                        cells[i][j] = 3;
+                        this.setState({
+                            cells: cells,
+                        });
+                    }
             }
         }
     }
@@ -280,12 +285,18 @@ class Grid extends React.Component {
         this.setState({
             cells: cells,
         });
-        if (closed[end.c1][end.c2]) {
-            cells[end.c1][end.c2] = 2;
-            this.showPath(cells, start, end, closed, {
-                c1: closed[end.c1][end.c2].parent.c1,
-                c2: closed[end.c1][end.c2].parent.c2,
-            });
+        if (closed[end.c1][end.c2] || open.length === 0) {
+            if (open.length === 0) {
+                this.setState({
+                    finding_path: !this.state.finding_path,
+                });
+            } else {
+                cells[end.c1][end.c2] = 2;
+                this.showPath(cells, start, end, closed, {
+                    c1: closed[end.c1][end.c2].parent.c1,
+                    c2: closed[end.c1][end.c2].parent.c2,
+                });
+            }
         } else
             setTimeout(
                 () => this.showNextstep(cells, start, end, open, closed),
@@ -363,6 +374,7 @@ class Grid extends React.Component {
                 <p className="info">
                     Drag to move starting point(blue) and target point(red)
                 </p>
+                <p className="info">Draw walls on white cells</p>
                 <div className="button-wrapper">{this.renderButtons()}</div>
             </>
         );
