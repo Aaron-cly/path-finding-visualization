@@ -25,7 +25,7 @@ const cell_class = [
     "cell path", //6: path
 ];
 
-const move_interval = 10; //in ms how long each moves waits until next move displays
+const move_interval = 50; //in ms how long each moves waits until next move displays
 
 const col_index = [],
     row_index = [];
