@@ -25,7 +25,7 @@ const cell_class = [
     "cell path", //6: path
 ];
 
-const move_interval = 1; //in ms how long each moves waits until next move displays
+const move_interval = 0; //in ms how long each moves waits until next move displays
 
 const col_index = [],
     row_index = [];
@@ -346,7 +346,7 @@ class Grid extends React.Component {
         } else {
             setTimeout(
                 () => this.showPath(cells, start, end, closed, prevCell),
-                5
+                3
             );
         }
     }
