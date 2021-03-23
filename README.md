@@ -7,7 +7,7 @@ This is a React application that visualizes A* path-finding algorithm.
 My main goal building this app is to explore and learn the basics of React.
 
 Some rendering issues have been spotted (e.g. dragging won't release) due to delay of the server host.
-It is recommended to clone the repository and build it locally to try the web out.
+It is recommended to clone the repository and build it locally to try the app.
 
 Requirement: 
 Nodejs >= 10.14.2
