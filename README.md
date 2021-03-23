@@ -1,4 +1,4 @@
-# Demo Website
+# Demo Website  *Chrome recommended
 https://relaxed-easley-541403.netlify.app/
 
 
