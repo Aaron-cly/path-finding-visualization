@@ -2,8 +2,10 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
+const windowWidth = window.screen.width;
+
 const max_row = 25,
-    max_col = 50;
+    max_col = Math.floor(windowWidth / 21);
 
 const default_start = {
     c1: Math.floor(max_row / 2),
@@ -115,6 +117,7 @@ class Grid extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            mouseInGrid: false,
             pressed: false,
             finding_path: false,
             finished: false,
@@ -146,6 +149,7 @@ class Grid extends React.Component {
                 onMouseDown={() => this.handlePress(i, j)}
                 onMouseUp={() => this.handleRelease()}
                 onMouseOver={() => this.handleSelect(i, j)}
+
             />
         );
     }
@@ -238,21 +242,45 @@ class Grid extends React.Component {
         if (this.state.pressed) {
             const cells = this.state.cells;
             switch (this.state.object) {
-                case 1:
-                    cells[this.state.start.c1][this.state.start.c2] = 0;
-                    cells[i][j] = 1;
-                    this.setState({
+                case 1: //switch start and end points if they meet
+                    if (cells[i][j] == 2){
+                        cells[i][j] = 1;
+                        cells[this.state.start.c1][this.state.start.c2] = 2;
+                        this.setState({
+                        start: { c1: i, c2: j },
+                        end: { c1: this.state.start.c1, c2: this.state.start.c2 },                        
+                        cells: cells,
+                        });
+                        console.log("CALLED 1");
+                    }
+                    else{
+                        cells[this.state.start.c1][this.state.start.c2] = 0;
+                        cells[i][j] = 1;
+                        this.setState({
                         start: { c1: i, c2: j },
                         cells: cells,
                     });
+                    }
+                    
                     break;
                 case 2:
-                    cells[this.state.end.c1][this.state.end.c2] = 0;
-                    cells[i][j] = 2;
-                    this.setState({
-                        end: { c1: i, c2: j },
-                        cells: cells,
-                    });
+                    if (cells[i][j]==1){
+                        cells[i][j] = 2;
+                        cells[this.state.end.c1][this.state.end.c2] = 1;
+                        this.setState({
+                            start: {c1: this.state.start.c1, c2: this.state.end.c2},
+                            end: { c1: i, c2: j },
+                            cells: cells,
+                        })
+                    }else{
+                        cells[this.state.end.c1][this.state.end.c2] = 0;
+                        cells[i][j] = 2;
+                        this.setState({
+                            end: { c1: i, c2: j },
+                            cells: cells,
+                        });
+                    }
+
                     break;
                 case 3:
                     if (
@@ -370,6 +398,16 @@ class Grid extends React.Component {
         });
     };
 
+    handleLeaveGrid(){
+        if (this.state.pressed){
+            this.setState({
+                pressed: !this.state.pressed,
+            })
+        }
+        // mouseInGrid: false,
+        //     pressed: false,
+    }
+
     render() {
         const rows = [];
 
@@ -389,12 +427,14 @@ class Grid extends React.Component {
 
         return (
             <>
-                <div className="grid">{rows}</div>
+
+                <div className="grid" onMouseLeave = {() => this.handleLeaveGrid()}>{rows}</div>
+                
                 <div className="info">
-                    <p>
+                    <div>
                         Drag to move starting point(blue) and target point(red).
-                    </p>
-                    <p>Draw walls on white cells.</p>
+                    </div>
+                    <div>Draw walls on white cells.</div>
                 </div>
                 <div className="button-wrapper">{this.renderButtons()}</div>
             </>

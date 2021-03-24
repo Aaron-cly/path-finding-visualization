@@ -12,6 +12,8 @@
     margin: 0;
     border-bottom: 1px black solid;
     border-right: 1px black solid;
+    -webkit-user-drag: none;
+
 }
 
 .start {
@@ -37,9 +39,9 @@
 
 .grid {
     height: auto;
-    width: auto;
     overflow: hidden;
-    margin-left: 5px;
+    float: left;
+    margin-left: 1px;
 }
 
 .grid-row {
@@ -68,11 +70,14 @@ button:hover {
 }
 
 .info {
-    width: 50%;
+    /* width: 50%; */
+    height: auto;
     font-size: 25px;
     text-align: center;
 }
 
 .button-wrapper {
     height: auto;
+    text-align: center;
+    padding: 20px;
 }
